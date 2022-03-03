@@ -28,20 +28,75 @@ import static edu.neu.coe.info6205.util.SortBenchmarkHelper.getWords;
 import static edu.neu.coe.info6205.util.Utilities.formatWhole;
 
 public class SortBenchmark {
+    
+    
+    
+    public static void sortSimulation(final int noOfEle, final int m, final String type) {
+        final Random random = new Random();
+        System.out.println(type);
+        final Supplier<Integer[]> intsSupplier = () -> {
+            Integer[] arr = new Integer[noOfEle];
+            if (type == "reverse_ordered") {
+                //System.out.println("Reverse ordered");
+                for (int i = 0; i < noOfEle; i++) arr[i] = noOfEle - i;
+            } else if(type == "ordered") {
+                //System.out.println("Ordered");
+                for (int i = 0; i < noOfEle; i++) arr[i] = i;
+            } else if(type == "random") {
+                //System.out.println("Random");
+                for (int i = 0; i < noOfEle; i++) arr[i] = random.nextInt();
+            } else if(type == "partially sorted") {
+                //System.out.println("Partially sorted");
+                for (int i = 0; i < noOfEle; i++) arr[i] = i;
+                for (int j=noOfEle; j > 0; j--)  {
+                    int index1 =  random.nextInt(arr.length);
+                    int index2 = random.nextInt(arr.length);
+                    int temp = arr[index1];
+                    arr[index1] = arr[index2];
+                    arr[index2] = temp;
+                }
+            }
+            return arr;
+        };
+
+        final double t1 = new Benchmark_Timer<Integer[]>(
+                "InsertionSort Simulation",
+                (xs) -> Arrays.copyOf(xs, xs.length),
+                (xs) -> {
+                    InsertionSort<Integer> i = new InsertionSort<>();
+                    i.sort(xs, 1, xs.length);
+                },
+                null
+        ).runFromSupplier(intsSupplier, m);
+        // for (TimeLogger timeLogger : timeLoggersLinearithmic) timeLogger.log(t1, n);
+        for (TimeLogger timeLogger : timeLoggersQuadratic) timeLogger.log(t1, noOfEle);
+    }
+
 
     public SortBenchmark(Config config) {
         this.config = config;
     }
 
     public static void main(String[] args) throws IOException {
-        Config config = Config.load(SortBenchmark.class);
-        logger.info("SortBenchmark.main: " + config.get("SortBenchmark", "version") + " with word counts: " + Arrays.toString(args));
-        if (args.length == 0) logger.warn("No word counts specified on the command line");
-        SortBenchmark benchmark = new SortBenchmark(config);
-        benchmark.sortIntegersByShellSort(100000);
-        benchmark.sortStrings(Arrays.stream(args).map(Integer::parseInt));
-//        benchmark.sortIntegersByShellSort();
-        benchmark.sortLocalDateTimes(100000, config);
+        int n = 30;
+        int m = 50;
+        for (int i=10; i > 0; i--) {
+            System.out.println(n);
+            sortSimulation(n, m, "random");
+            sortSimulation(n, m, "ordered");
+            sortSimulation(n, m, "partially sorted");
+            sortSimulation(n, m, "reverse_ordered");
+            n *= 2;
+        }
+        
+//        Config config = Config.load(SortBenchmark.class);
+//        logger.info("SortBenchmark.main: " + config.get("SortBenchmark", "version") + " with word counts: " + Arrays.toString(args));
+//        if (args.length == 0) logger.warn("No word counts specified on the command line");
+//        SortBenchmark benchmark = new SortBenchmark(config);
+//        benchmark.sortIntegersByShellSort(100000);
+//        benchmark.sortStrings(Arrays.stream(args).map(Integer::parseInt));
+////        benchmark.sortIntegersByShellSort();
+//        benchmark.sortLocalDateTimes(100000, config);
     }
 
     // CONSIDER generifying common code (but it's difficult if not impossible)
